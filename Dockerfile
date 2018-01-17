@@ -28,22 +28,27 @@ SHELL ["/bin/bash", "-c"]
 # install and uninstall build-essential in one step to reduce layer size
 # while installing Lmod and EasyBuild
 ENV LMOD_VER=7.7.3
+RUN apt-get install -y build-essential && \
+    curl -L -o /tmp/Lmod-${LMOD_VER}.tar.gz https://github.com/TACC/Lmod/archive/${LMOD_VER}.tar.gz && \
+    tar -xzf /tmp/Lmod-${LMOD_VER}.tar.gz && \
+    cd Lmod-${LMOD_VER} && \
+    ./configure --with-tcl=no && \
+    make install && \
+    cd .. && \
+    rm -r Lmod-${LMOD_VER} && \
+    rm /tmp/Lmod-${LMOD_VER}.tar.gz && \
+    apt-get remove -y --purge build-essential && \
+    apt-get autoremove -y --purge
 ENV EB_VER=3.5.0
 ENV EASYBUILD_PREFIX=/app
 ENV EASYBUILD_MODULES_TOOL=Lmod
 ENV EASYBUILD_MODULE_SYNTAX=Lua
+COPY eb_module_footer /tmp/eb_module_footer
 RUN apt-get install -y build-essential && \
-    curl -L -o /tmp/Lmod-${LMOD_VER}.tar.gz https://github.com/TACC/Lmod/archive/${LMOD_VER}.tar.gz && \
-    su -c "tar -xzf /tmp/Lmod-${LMOD_VER}.tar.gz && \
-           cd Lmod-${LMOD_VER} && \
-           ./configure --prefix=/app --with-tcl=no && \
-           make install && \
-           cd .. && \
-           rm -r Lmod-${LMOD_VER}" - neo && \
-    rm /tmp/Lmod-${LMOD_VER}.tar.gz && \
     curl -L -o /tmp/bootstrap_eb.py https://github.com/easybuilders/easybuild-framework/raw/easybuild-framework-v${EB_VER}/easybuild/scripts/bootstrap_eb.py && \
-    su -c "source /app/lmod/lmod/init/bash && \
-           python /tmp/bootstrap_eb.py ${EASYBUILD_PREFIX}" - neo && \
+    su -c "source /usr/local/lmod/lmod/init/bash && \
+           python /tmp/bootstrap_eb.py ${EASYBUILD_PREFIX} && \
+           cat /tmp/eb_module_footer >> /app/modules/all/EasyBuild/${EB_VER}.lua" - neo && \
     rm /tmp/bootstrap_eb.py && \
     apt-get remove -y --purge build-essential && \
     apt-get autoremove -y --purge
