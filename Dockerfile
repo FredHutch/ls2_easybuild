@@ -1,59 +1,36 @@
-FROM fredhutch/ls2_ubuntu:16.04_20180116
+FROM fredhutch/ls2_lmod:7.7.14
 
-ENV DEBIAN_FRONTEND noninteractive
+# Remember, default user will be LS2_USER, not root
+
+# These must be specified
+ARG EB_VER
+ENV EB_VER=${EB_VER}
+
+# copy in scripts and files
+COPY install_easybuild.sh /ls2/
+COPY bootstrap_eb.py /ls2/
+COPY eb_module_footer /ls2/
 
 # OS Packages
 #   EasyBuild needs Python, and an Environment Modules implementation
-#   Our Environment Modules implementation, Lmod, needs lua
-#   Apparently with EasyBuild using https urls for download, it needs ssl
-RUN apt-get update && apt-get install -y \
+USER root
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
     python \
-    python-setuptools \
-    lua5.2 \
-    lua-posix \
-    lua-filesystem \
-    lua-term \
-    ssl-cert
-
-# Install directory
-RUN mkdir /app && chown 500.500 /app
-
-# User
-#   EasyBuild does not build as root, so we make a user
-RUN groupadd -g 500 neo && useradd -u 500 -g neo -ms /bin/bash neo
-
-# use bash
-SHELL ["/bin/bash", "-c"]
+    python-setuptools 
 
 # install and uninstall build-essential in one step to reduce layer size
-# while installing Lmod and EasyBuild
-ENV LMOD_VER=7.7.3
-RUN apt-get install -y build-essential && \
-    curl -L -o /tmp/Lmod-${LMOD_VER}.tar.gz https://github.com/TACC/Lmod/archive/${LMOD_VER}.tar.gz && \
-    tar -xzf /tmp/Lmod-${LMOD_VER}.tar.gz && \
-    cd Lmod-${LMOD_VER} && \
-    ./configure --with-tcl=no && \
-    make install && \
-    cd .. && \
-    rm -r Lmod-${LMOD_VER} && \
-    rm /tmp/Lmod-${LMOD_VER}.tar.gz && \
-    apt-get remove -y --purge build-essential && \
-    apt-get autoremove -y --purge
-ENV EB_VER=3.5.0
-ENV EASYBUILD_PREFIX=/app
-ENV EASYBUILD_MODULES_TOOL=Lmod
-ENV EASYBUILD_MODULE_SYNTAX=Lua
-COPY eb_module_footer /tmp/eb_module_footer
-RUN apt-get install -y build-essential && \
-    curl -L -o /tmp/bootstrap_eb.py https://github.com/easybuilders/easybuild-framework/raw/easybuild-framework-v${EB_VER}/easybuild/scripts/bootstrap_eb.py && \
-    su -c "source /usr/local/lmod/lmod/init/bash && \
-           python /tmp/bootstrap_eb.py ${EASYBUILD_PREFIX} && \
-           cat /tmp/eb_module_footer >> /app/modules/all/EasyBuild/${EB_VER}.lua" - neo && \
-    rm /tmp/bootstrap_eb.py && \
-    apt-get remove -y --purge build-essential && \
-    apt-get autoremove -y --purge
+# while installing Lmod
+RUN apt-get install -y build-essential \
+    && su -c "/bin/bash /ls2/install_easybuild.sh" ${LS2_USERNAME} \
+    && AUTO_ADDED_PKGS=$(apt-mark showauto) apt-get remove -y --purge build-essential ${AUTO_ADDED_PKGS} \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
-# switch to neo user for future actions
-USER neo
-WORKDIR /home/neo
+# gather pkg info
+RUN dpkg -l > /ls2/installed_pkgs.easybuild
+
+# switch to LS2 user for future actions
+USER ${LS2_USERNAME}
+WORKDIR /home/${LS2_USERNAME}
 SHELL ["/bin/bash", "-c"]
+
