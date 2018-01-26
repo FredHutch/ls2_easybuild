@@ -8,6 +8,7 @@ ENV EB_VER=${EB_VER}
 
 # copy in scripts and files
 COPY install_easybuild.sh /ls2/
+COPY deploy_easybuild.sh /ls2/
 COPY bootstrap_eb.py /ls2/
 COPY eb_module_footer /ls2/
 
