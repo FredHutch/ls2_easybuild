@@ -11,15 +11,14 @@ export EASYBUILD_MODULES_TOOL=Lmod
 export EASYBUILD_MODULE_SYNTAX=Lua
 
 echo "Getting bootstrap_eb.py..."
-# this is what we do if/when bootstrap_eb.py respects a specified version parameter
-#curl -L -o /tmp/bootstrap_eb.py https://github.com/easybuilders/easybuild-framework/raw/easybuild-framework-v${EB_VER}/easybuild/scripts/bootstrap_eb.py && \
+curl -L -o /tmp/bootstrap_eb.py https://github.com/easybuilders/easybuild-framework/raw/easybuild-framework-v${EB_VER}/easybuild/scripts/bootstrap_eb.py && \
 
 echo "Loading Lmod..."
 source ${DEPLOY_PREFIX}/lmod/lmod/init/bash
 
 echo "Bootstrapping EasyBuild ${EB_VER} into ${DEPLOY_PREFIX}..."
 export EASYBUILD_BOOTSTRAP_FORCE_VERSION=${EB_VER}
-python /ls2/bootstrap_eb.py ${EASYBUILD_PREFIX}
+python /tmp/bootstrap_eb.py ${EASYBUILD_PREFIX}
 
 echo "Customizing EasyBuild modulefile..."
 if [ -w "/${DEPLOY_PREFIX}/modules/all/EasyBuild/${EB_VER}.lua" ]
