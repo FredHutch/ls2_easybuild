@@ -5,7 +5,7 @@ Ubuntu container with easybuild and Lmod
 Please look at [ls2](https://github.com/FredHutch/ls2) for details on how to build these Dockerfiles and how to use them to deploy the same software to a local archive.
 
  * Docker build command should include: `--build-arg  --build-arg EB_VER=3.7.0`
- * EB_VER is the specific version of EasyBuild to install - note that bootstrap_eb.py does not support this yet, thus we use our own patched bootstrap_eb.py
+ * EB_VER is the specific version of EasyBuild to install
 
 This container adds:
 
